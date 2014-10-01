@@ -2,10 +2,40 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <style>
+    body { font-family: sans-serif; }
+    span { padding: 4px; }
+    .client_id { background-color: #f0f0f0; }
+    .client_ip { color: #0000f0; }
+  </style>
   <title>redis-tracking</title>
 </head>
 <body>
   <div>
+    <h3><%= STREAM_PATH %></h3>
+    <ul id="clients">
+    </ul>
   </div>
+
+  <script>
+  (function worker() {
+    $.ajax({
+      url: '/fetch_clients', 
+      success: function(rawData) {
+        $('#clients li').remove();
+        data = JSON.parse(rawData);
+        for( client_id in data ) {
+          client = data[client_id];
+          li = '<li><span class="client_id">' + client_id + '</span> <span class="client_ip">' + client['ip_addr'] + '</span> <span class="client_ua">' + client['user_agent'] + '</span></li>' ;
+          $('#clients').append( li );
+        };
+      },
+      complete: function() {
+        setTimeout(worker, <%= REDIS_EXPIRE*1000/2 %>); // half time
+      }
+    });
+  })();
+  </script>
 </body>
 </html>
